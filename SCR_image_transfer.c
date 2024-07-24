@@ -186,6 +186,6 @@ void Transmit_RGB_320x240Frame(uint8_t* half_pixels)
  */
 {
 
-	  LTDC_320x240_RGB565_Config((uint32_t)&image[0]);
+	  LTDC_320x240_RGB565_Config((uint32_t)half_pixels);
 
 }
