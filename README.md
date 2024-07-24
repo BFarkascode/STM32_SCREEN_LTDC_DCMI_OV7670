@@ -110,6 +110,8 @@ We also have another bug where the PWDN of the camera must be manually reset aft
 
 There is no timeout on the last delay either, the one that is engaged after we have the LTDC activated. Any attempts to replace this delay has resulted in crashes.
 
+We also have unfortunately an endian byte swap somewhere in the data flow when we are using the LTDC, leading to inverted colours on the screen. This endian swap does not occur with the SPI+DMA though.
+
 Lastly, noise is getting even greater of an issue here due to the increased speed. Without an adapter board, this project did not work for me whatsoever.
 
 ## User guide
