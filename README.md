@@ -32,25 +32,27 @@ Crude delays can still be pretty useful for debugging though. For instance, we c
 In the second project, we ended up clocking our MCU at 60 MHz for the simple reason that generating a 12 MHz master clock for the OV7670 was easy from that value. Unfortunately, that also meant that we were clocking all AHB/APB busses 3 times slower than what could be achieved. Increasing the MCU’s clocking should mean that all peripherals' execution (and, by proxy, the data flow) should increase. I ended up going with a clocking of 120 MHz.
 
 ### Camera clocking
-We are clocking the camera with a 12 MHz master clock, which – with the original setup we have extracted from the Adafruit code – results in a camera capture frame rate of 30 fps (you can check this by probing the VS output with an oscilloscope). The datasheet of the camera suggests though that at 320x240 resolution, we should be able reach 60 fps, a two-fold increase. We can gain this by using the camera’s own PLL to multiple the master clock, thus increasing the clocking of the camera.
+We are clocking the camera with a 12 MHz master clock (provided by PWM from the MCU), which – with the original camera init matrix from Adafruit – results in a camera capture frame rate of 30 fps. The datasheet of the camera does suggest though that at 320x240 resolution, we should be able reach 60 fps, a two-fold increase.
 
-Mind, we are controlling the DCMI using the camera’s outputs, so increased clocking on the camera will lead to increased image capture to the frame buffer.
+Indeed, we can attain this output speed by using the camera’s own PLL to multiple the master clock. Originally, we weren't using the PLL.
+
+Mind, we are controlling the DCMI using the camera’s outputs, so increased clocking on the camera will lead to increased image capture to the frame buffer...and even more noise.
 
 ### Screen driver clocking
-We can also increase the refresh rate of the screen by manipulating the ILI’s own clocking and refresh rate. 
+We can also increase the refresh rate of the screen by manipulating the ILI’s own clocking and refresh rate. Since this refresh rate is related to whatever is in the GRAM, we don't really need to bother ourselves with it. We just need to keep in mind that if the ILI input is not clocking (SPI+DMA or LTDC), the screen won't be clocking either.
 
 ### LTDC
-Lastly, we can use a completely new peripheral (LTDC) to extract data from the frame buffer. It is a parallel interface that – in theory – should allow us to circumvent the problems we are facing with using SPI+DMA since it does not have a transfer limit and runs its own DMA. Mind, the LTDC provides an “RGB interface”, thus we will need to readjust the ILI screen driver to make use of it.
+Lastly, we can use a completely new peripheral (LTDC) to extract data from the frame buffer. It is a parallel interface that – in theory – should allow us to circumvent the problems we were facing using SPI+DMA since, i.e. the transfer limit and low speed. Mind, the LTDC provides an “RGB interface”, thus we will need to readjust the ILI screen driver to make use of it.
 
 ## Previous relevant projects
 We will build on the previous project in the line:
 - STM32_SCREEN_SPI_DCMI_OV7670 
 
 ## To read
-There is no new reading material for this project.
+There is no new reading material for this project. Profound understanding of what the peripherals and drivers are doing is pivotal though, so keep the datasheet close.
 
 ## Particularities
-We were using crude delays to time the output in the second project, literally blocking all execution until we were roughly sure that the image has been transferred. This worked well until now but it isn’t a particularly refined way to clock our setup. It also makes the timing of each steps indicated in the “Recap” section completely haphazard and not tight whatsoever
+We were using crude delays to time the output in the second project, literally blocking all code execution until we were roughly sure that the image has been transferred. It worked well to get some kind of output done, but made the timing of each step indicated in the “Recap” section completely haphazard. It was obvious that we were losing a lot of time, something that we could regain by dropping the delays.
 
 ### Climb to 10
 If we set up the speed tracking opportunity I have indicated above, it will be clear that it takes us roughly 250 ms to store an incoming image in the frame buffer and about 50 ms to publish one section of the image to the screen…
