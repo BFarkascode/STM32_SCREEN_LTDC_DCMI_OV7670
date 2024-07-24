@@ -18,18 +18,18 @@ To give a recap over the architecture (with clocking indicated):
 4) We publish the frame buffer by using the SPI+DMA combination (SPI clocked by APB2, DMA by AHB1) or, alternatively, by using something called the LTDC (also on APB2).
 5) The ILI9341 stores the frame buffer in its GRAM and the publishes the image according to its own internal clock (between 60 fps to 120 fps, depending on init).
 
-Technically, we transfer the image through multiple buffers using multiple peripherals that have their own clocks and limitations. What may be a bit difficult to get is that we have an interplay between these peripherals and drivers that can, to some extent, offer us potential workarounds given they are properly set up. All in all, we might be able to simplify the problem to a pure timing challenge.
+Technically, we transfer the image through multiple buffers using multiple peripherals that have their own clocks and limitations. What may be a bit difficult to get is that we have an interplay between these peripherals and drivers that can, to some extent, offer us potential workarounds given they are properly set up. All in all, we might be able to simplify the problem to a pure timing challenge. We do need to profoundly understand, what is going on within these peripherals first though by reading the documentation and doing a lot of trial and error. OF note, I will not be touching upon the trial and error phases I had to go thorugh to achieve the outcome.
 
 ## Need for speed 
-We need speed to squeeze out the possible highest frame rate. But how can we gain it? What can we tap into? Well, we can use a few tools at our disposition.
+Looking at the meager 2 fps we had in the second project (and the proven 10 fps potentially avaialable to us), it is clear that we need to squeeze out more speed from the peripherals to attain greater framerate as well as decreased the timing delay that currently exists between the engagement of these peripherals. We have a few tools at our disposition to achieve that.
 
 ### Interrupts
-Every capability we are using in our setup has its own set of interrupts. This means that relying on crude delay functions could be bypassed, saving us time.
+Every capability we are using in our setup has its own set of interrupts. This means that, given the tirggers are properly set and managed, we can completely drop the crude delay functions we awere relying upon.
 
-Of note, we can actually track the speed increase by checking using the debug tool, at which point of the delay execution do we have the triggering. We just need to put a break point into the handler, step out of it and see where we have landed in the delay function.
+Crude delays can still be pretty useful for debugging though. For instance, we can track the execution speed of a peripheral without an oscilloscope by adding a break point into the IRQ handler and then step out of it using the debug tool. Wherever we will land in the delay functions execution cycle, will be a rough estimate of how long it takes for the peripheral to reach its IRQ trigger.
 
 ### MCU clocking
-In the second project, we ended up clocking our MCU at 60 MHz for the simple reason that generating a 12 MHz master clock for the OV7670 was easy from that. Unfortunately, that also meant that we were clocking all AHB/APB busses 3 times slower than what could be achieved. Increasing the MCU’s clocking to 180 MHz – the maximum – should mean that all execution (and, by proxy, the data flow) should increase 3-fold. 
+In the second project, we ended up clocking our MCU at 60 MHz for the simple reason that generating a 12 MHz master clock for the OV7670 was easy from that value. Unfortunately, that also meant that we were clocking all AHB/APB busses 3 times slower than what could be achieved. Increasing the MCU’s clocking should mean that all peripherals' execution (and, by proxy, the data flow) should increase. I ended up going with a clocking of 120 MHz.
 
 ### Camera clocking
 We are clocking the camera with a 12 MHz master clock, which – with the original setup we have extracted from the Adafruit code – results in a camera capture frame rate of 30 fps (you can check this by probing the VS output with an oscilloscope). The datasheet of the camera suggests though that at 320x240 resolution, we should be able reach 60 fps, a two-fold increase. We can gain this by using the camera’s own PLL to multiple the master clock, thus increasing the clocking of the camera.
