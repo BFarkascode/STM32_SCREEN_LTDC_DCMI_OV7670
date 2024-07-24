@@ -108,6 +108,8 @@ As mentioned above, we have the DMA TC triggering more than necessary.
 
 We also have another bug where the PWDN of the camera must be manually reset after init. Technically, the DCMI frame received trigger will refuse to activate until we do this reset. I am not sure, what this bug is about, I have tried to put a timeout on it PWDN GPIO to reset the camera automatically, but, unless we do the reset manually, it doesn’t seem to work. I don’t know if this is a CMOS level problem (CMOS pins should be pulled LOW when not used, something my adaptor board doesn’t do right now) or could be a timing problem (where the reset has to occur at a certain point in the execution) or both. I am leaning towards both. At any rate, this bug, for better or worse, must be bypassed manually.
 
+There is no timeout on the last delay either, the one that is engaged after we have the LTDC activated. Any attempts to replace this delay has resulted in crashes.
+
 Lastly, noise is getting even greater of an issue here due to the increased speed. Without an adapter board, this project did not work for me whatsoever.
 
 ## User guide
@@ -116,4 +118,8 @@ I have left the 10 fps SPI+DMA version in the code behind #ifdef markers. It wor
 For the 30 fps LTDC version to work, one merely needs to power up the setup and then manually reset the camera using the PWDN pin (just ground it with a wire).
 
 ## Conclusion
-I am rather proud of this project since I have not seen anyone churn out 30 fps from a F429_DISCO before. Nevertheless, if I make a follow-up project, I likely will use something more powerful. We are very much at the limits of what we can do with this setup.
+All in all, this is a very ramshackle project that works because, by chance, I have managed to free-ball the timing properly. There are massive holes in the concept that could be repaired and optimised for a reliable run.
+
+Nevertheless, my point was not to do a perfect solution but to show that it is physically possible to do this despite what HAL suggests.
+
+I am rather proud of this project since I have not seen anyone churn out 30 fps from a F429_DISCO before.
