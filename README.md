@@ -1,6 +1,6 @@
 
 # STM32_SCREEN_LTDC_DCMI_OV7670
-Bare metal project to extract output from an OV7670 camera at higher speed (10 fps for SPI, 30 fps for LTDC). This is the third project (and potentially the last) in a sequence of projects.  
+Bare metal project to extract output from an OV7670 camera at higher speed (10 fps for SPI, 30 fps for LTDC). This is the third project in a sequence of projects.  
 
 ## General description
 In the second project, we were extracting images from the OV7670 at roughly 2 fps. This was due to various limitations that we imposed on ourselves to simply the project and get an output on the screen. It was thus obvious from the start that this is not the maximum we can achieve with the OV7670+DISCO setup. Not to mention, there already are multiple examples of similar project on the internet that show that 10 fps could be achieved without an issue should we choose to be more on-point with our timings…
