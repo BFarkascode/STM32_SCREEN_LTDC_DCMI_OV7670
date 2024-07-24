@@ -3,20 +3,22 @@
 Bare metal project to extract output from an OV7670 camera at higher speed (10 fps for SPI, 30 fps for LTDC). This is the third project (and potentially the last) in a sequence of projects.  
 
 ## General description
-As mentioned in the second part of the project, we are extracting images from the OV7670 at roughly 2 fps. Not exactly the fastest way to do it, nor is it the maximum we can achieve with the tool set we made use there. Multiple examples of this project exist on the internet proving that 10 fps could be achieved without an issue…
+In the second project, we were extracting images from the OV7670 at roughly 2 fps. This was due to various limitations that we imposed on ourselves to simply the project and get an output on the screen. It was thus obvious from the start that this is not the maximum we can achieve with the OV7670+DISCO setup. Not to mention, there already are multiple examples of similar project on the internet that show that 10 fps could be achieved without an issue should we choose to be more on-point with our timings…
 
-…and yet, after achieving that outcome (see below), I still was convinced that we could do better. So, let’s see what we can get out of this setup!
+…and yet, even after achieving that particular outcome (see below in the section "Climb to 10"), I still was convinced that we could do even better.
+
+Let’s see what I ended up cooking up!
 
 ### Recap
 To give a recap over the architecture (with clocking indicated):
 
-1) We generate images with the camera at a speed defined by the internal clocking of the camera.
-2) We use the DCMI interface to capture the output of the camera. The DCMI is clocked by the PIXCLK output of the camera.
-3) We transfer the captured output from the DCMI peripheral to the frame buffer in chunks of 32 bits, using a DMA, clocked by the AHB1 clock.
-4) We publish the frame buffer by either using the SPI+DMA combination (SPI clocked by APB2, DMA by AHB1) or by using something called the LTDC (also on APB2).
-5) The ILI9341 stores the frame buffer in its GRAM and the publishes it according to its own internal clock (between 60 fps to 120 fps).
+1) We generate images with the OV7670 camera at a speed defined by the internal clock of the camera (which is powered by an external master clock).
+2) We use the DCMI interface to capture the image output where the DCMI is clocked by the PIXCLK output of the camera.
+3) We transfer the captured image from the DCMI peripheral to the frame buffer in chunks of 32 bits, using a DMA, clocked by the MCU's own AHB1 clock.
+4) We publish the frame buffer by using the SPI+DMA combination (SPI clocked by APB2, DMA by AHB1) or, alternatively, by using something called the LTDC (also on APB2).
+5) The ILI9341 stores the frame buffer in its GRAM and the publishes the image according to its own internal clock (between 60 fps to 120 fps, depending on init).
 
-What is a bit difficult to get is that we have an interplay between multiple peripherals and drivers that can, to some extent, do their own thing. We don’t need to micromanage them just freeball their input and output stream to the point where things start to work. This is a pure timing challenge.
+Technically, we transfer the image through multiple buffers using multiple peripherals that have their own clocks and limitations. What may be a bit difficult to get is that we have an interplay between these peripherals and drivers that can, to some extent, offer us potential workarounds given they are properly set up. All in all, we might be able to simplify the problem to a pure timing challenge.
 
 ## Need for speed 
 We need speed to squeeze out the possible highest frame rate. But how can we gain it? What can we tap into? Well, we can use a few tools at our disposition.
