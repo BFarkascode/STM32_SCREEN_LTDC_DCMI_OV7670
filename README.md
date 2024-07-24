@@ -106,7 +106,7 @@ Despite all my efforts to make this a robust solution, I think I went just way t
 
 As mentioned above, we have the DMA TC triggering more than necessary.
 
-We also have another bug where the PWDN of the camera must be manually reset after init. Technically, the DCMI frame received trigger will refuse to activate until we do this reset. I am not sure, what this bug is about, I have tried to put a timeout on it PWDN GPIO to reset the camera automatically, but, unless we do the reset manually, it doesn’t seem to work. I don’t know if this is a CMOS level problem (CMOS pins should be pulled LOW when not used, something my adaptor board doesn’t do right now) or could be a timing problem (where the reset has to occur at a certain point in the execution) or both. I am leaning towards both. At any rate, this bug, for better or worse, must be bypassed manually.
+We also have another bug where the PWDN of the camera must be manually reset after init. Technically, the DCMI frame received trigger will refuse to activate until we do this reset. I am not sure, what this bug is about, I have tried to put a timeout on it PWDN GPIO to reset the camera automatically, but, unless we do the reset manually, it doesn’t seem to work. I don’t know if this is a CMOS level problem (CMOS pins should be pulled LOW when not used, something my adaptor board doesn’t do right now) or could be a timing problem (where the reset has to occur at a certain point in the execution) or a noise issue (playing with only a pattern as output indicates that) or all three of those. At any rate, this bug, for better or worse, currently must be bypassed manually.
 
 There is no timeout on the last delay either, the one that is engaged after we have the LTDC activated. Any attempts to replace this delay has resulted in crashes.
 
@@ -114,6 +114,8 @@ Lastly, noise is getting even greater of an issue here due to the increased spee
 
 ## User guide
 I have left the 10 fps SPI+DMA version in the code behind #ifdef markers. It works without any extra user attention.
+
+I have also left the generated pattern in there, although to make use of it, the LTDC handler function must be deactivated. Please refer to the designated section within the code.
 
 For the 30 fps LTDC version to work, one merely needs to power up the setup and then manually reset the camera using the PWDN pin (just ground it with a wire).
 
