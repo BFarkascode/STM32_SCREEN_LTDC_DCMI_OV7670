@@ -75,7 +75,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 uint8_t image[153600];																//this image will be stored in RAM!!!
-uint8_t* image_read_ptr = &image[0];												//we skip one pixel. Seems to be an artifact?
+uint8_t* image_read_ptr = &image[0];
 uint32_t* image_write_ptr = &image[0];
 uint8_t OV7670_address = 0x21;
 
@@ -191,14 +191,24 @@ int main(void)
 //#ifdef cam_input
 
 	  OV7670_Capture(image_write_ptr, 28800);
-	  while((!image_captured_flag)&&(!frame_end_flag));
+	  while(!frame_end_flag);
 
 	  frame_end_flag = 0;
-	  image_captured_flag = 0;
 
 //#endif
 	  //---------Capture camera image----------//
 
+#ifdef endian_swap
+// ENDIAN swap solves the problem of the colour, but it takes too long to execute, introducing some flicker to the screen
+	  for(int i = 0; i < 115200; i+=2){
+
+		  uint8_t pix_buf;
+		  pix_buf = image[i];
+		  image[i] = image[i+1];
+		  image[i+1] = pix_buf;
+
+	  }
+#endif
 	  //---------Publish image----------//
 
 #ifdef SPI_10_fps
