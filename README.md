@@ -117,7 +117,7 @@ Lastly, noise is getting even greater of an issue here due to the increased spee
 #### Update on bugs
 As it turned out, the DMA+DCMI timing was not working how I originally set it up. The DCMI IRQ was not activating and, when it did, it was triggering half as many times as the DMA connected to it. Of note, they should have triggered the same amount of time. In the end, I tracked the issue back to the control of the DCMI: once I have changed it from snapshot mode to continous mode, it started to work reliably. This meant that I did not need the manual reset anymore, nor did I need to have the DMA and the DCMI add an element to the while barrier after the image capture function. My guess is that within snapshot mode, the DCMI could not trigger reliably due to noise.
 
-Regarding the endian swap, unfortunately, we can't do it within the peripherals. I have added an endian swap after the image has been captured, though this adds some flicker to the screen, slowing it down in a noticeable manner.
+Regarding the endian swap, unfortunately, we can't do it within the peripherals. I have added an endian swap after the image has been captured, though this adds some flicker to the screen, slowing it down in a noticeable manner. I have left the endian swap commented out for the time being.
 
 ## User guide
 I have left the 10 fps SPI+DMA version in the code behind #ifdef markers. It works without any extra user attention.
