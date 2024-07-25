@@ -239,11 +239,11 @@ static const uint8_t OV7670_QVGA[166][2] =		//init the OV7670 to run at 320x240 
 
 
 //LOCAL VARIABLE
-static uint8_t count = 0;
+static uint32_t DCMI_count = 0;
+static uint32_t DMA_count = 0;
 
 //EXTERNAL VARIABLE
 extern uint8_t OV7670_address;					//the I2C address of the OV7670 camera
-extern uint8_t image_captured_flag;
 extern uint8_t frame_end_flag;
 
 //FUNCTION PROTOTYPES
