@@ -185,9 +185,10 @@ void OV7670_DCMI_DMA_init (void){
 	Delay_us(1);																//this delay is necessary, otherwise GPIO setup may freeze
 
 	//3)
-	DCMI->CR |= (1<<1);															//snapshot mode
+//	DCMI->CR |= (1<<1);															//snapshot mode
+																				//Note: snapshot mode does not activate reliably. Continous mode is used instead.
 	DCMI->CR |= (1<<7);															//VSYNCH active HIGH
-																				//EDM and FCRC are 0x00 which indicates 8-bit width and all frames captured
+																				//EDM and FCRC are 0x00 which indicates 8-bit width per pixel clock and all frames captured
 
 	DCMI->IER |= (1<<0);														//frame captured IRQ activated
 
@@ -198,7 +199,9 @@ void OV7670_DCMI_DMA_init (void){
 																				//Note: we will need the TC IRQ so as to reset the DMA after transfer since we are not using circular mode
 	DMA2_Stream1->CR |= (1<<25);												//select channel 1
 																				//DCMI is on CH1 Stream1 or Stream 7
+	DMA2_Stream1->CR &= ~(1<<13);												//memory data size is 32 bits
 	DMA2_Stream1->CR |= (1<<14);												//memory data size is 32 bits
+	DMA2_Stream1->CR &= ~(1<<11);												//peri data size is also 32 bits
 	DMA2_Stream1->CR |= (1<<12);												//peri data size is also 32 bits
 	DMA2_Stream1->CR |= (1<<10);												//memory increment active
 	DMA2_Stream1->PAR = (uint32_t)(&(DCMI->DR));								//we connect the DMA to the DCMI
@@ -238,6 +241,7 @@ void DCMI_IRQHandler(void){
 
 	//when the DCMI has captured the frame, we stop the camera's clocking
 	DCMI->ICR |= (1<<0);
+	DCMI->CR &= ~(1<<0);														//stop capture
 	GPIOF->BSRR |= (1<<4);														//PWD goes HIGH, we put the camera to IDLE
 	frame_end_flag = 1;
 }
@@ -252,8 +256,6 @@ void DMA2_Stream1_IRQHandler(void)
 
    DMA2->LIFCR |= (1<<11);														//clear transfer complete flag for stream 1
    	   	   	   	   	   	   	   	   												//Note: the transfer complete flag goes HIGH and then blocks the DMA from re-engaging until cleared
-   image_captured_flag = 1;
-
 }
 
 void DMA_DCMI_IRQPriorEnable(void) {
