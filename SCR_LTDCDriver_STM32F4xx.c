@@ -131,9 +131,12 @@ void LTDC_Init(void){
 	Delay_us(1);																//this delay is necessary, otherwise GPIO setup may freeze
 
 	//3
+//	RCC->PLLSAICFGR |= (192<<6);												//PLLSAI N
+//	RCC->PLLSAICFGR |= (4<<28);													//PLLSAI R
+//	RCC->DCKCFGR |= (1<<16);													//DIV 4
 	RCC->PLLSAICFGR |= (192<<6);												//PLLSAI N
 	RCC->PLLSAICFGR |= (4<<28);													//PLLSAI R
-	RCC->DCKCFGR |= (1<<16);													//DIV 4
+	RCC->DCKCFGR |= (2<<16);													//DIV 8
 	RCC->CR |= (1<<28);															//we turn on the PLL SAI for LCD
 	while (!(RCC->CR & (1<<29)));												//and wait until it becomes available
 
@@ -185,5 +188,16 @@ void LTDC_IRQHandler(void){
 	//Note: in order to have a VSYNCH line for the ILI using the DCMI, we need to uncomment the following two lines
 	LTDC->GCR  = 0x0;															//LCD disabled
 	LTDC_Layer1->CR = 0x0;														//layer disabled
+	if(enable_layer_false_trigger == 1){										//Note: we have the IRQ triggered falsely when the layer is enabled
+																				//This occurs only on startup
+																				//This false trigger must be skipped
+
+		enable_layer_false_trigger = 0;
+
+	} else {
+
+		layer_published = 1;
+
+	}
 
 }
