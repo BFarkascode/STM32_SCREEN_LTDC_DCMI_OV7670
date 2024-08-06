@@ -15,7 +15,7 @@ To give a recap over the architecture (with clocking indicated):
 1) We generate images with the OV7670 camera at a speed defined by the internal clock of the camera (which is powered by an external master clock).
 2) We use the DCMI interface to capture the image output where the DCMI is clocked by the PIXCLK output of the camera.
 3) We transfer the captured image from the DCMI peripheral to the frame buffer in chunks of 32 bits, using a DMA, clocked by the MCU's own AHB1 clock.
-4) We publish the frame buffer by using the SPI+DMA combination (SPI clocked by APB2, DMA by AHB1) or, alternatively, by using something called the LTDC (also on APB2).
+4) We publish the frame buffer by using the SPI+DMA combination (SPI clocked by APB2, DMA by AHB1) or, alternatively, by using something called the LTDC (also on APB2 for registers, AHB for the DMA).
 5) The ILI9341 stores the frame buffer in its GRAM and the publishes the image according to its own internal clock (between 60 fps to 120 fps, depending on init).
 
 Technically, we transfer the image through multiple buffers using multiple peripherals that have their own clocks and limitations. What may be a bit difficult to get is that we have an interplay between these peripherals and drivers that can, to some extent, offer us potential workarounds given they are properly set up. All in all, we might be able to simplify the problem to a pure timing challenge. We do need to profoundly understand, what is going on within these peripherals first though by reading the documentation and doing a lot of trial and error. OF note, I will not be touching upon the trial and error phases I had to go through to achieve the outcome.
@@ -118,6 +118,15 @@ Lastly, noise is getting even greater of an issue here due to the increased spee
 As it turned out, the DMA+DCMI timing was not working how I originally set it up. The DCMI IRQ was not activating and, when it did, it was triggering half as many times as the DMA connected to it. Of note, they should have triggered the same amount of time. In the end, I tracked the issue back to the control of the DCMI: once I have changed it from snapshot mode to continous mode, it started to work reliably. This meant that I did not need the manual reset anymore, nor did I need to have the DMA and the DCMI add an element to the while barrier after the image capture function. My guess is that within snapshot mode, the DCMI could not trigger reliably due to noise.
 
 Regarding the endian swap, unfortunately, we can't do it within the peripherals. I have added an endian swap after the image has been captured, though this adds some flicker to the screen, slowing it down in a noticeable manner. I have left the endian swap commented out for the time being.
+
+#### Second update on bugs
+I have managed to find a way around the last of the timing issues and the endian swap.
+
+As it turns out, whenever we enable the layer within the LTDC the very first time, it automatically falsely engages the line trigger for some reason. We can bypass this easily within the IRQ handler. Now we can remove of the delay function we had in the main loop just after the RGB transmit function and use a "while()" block instead to time the execution.
+
+Regarding the endian swap, the solution is a bit funkier. Obviously, it takes too much time to do a full swap on the entire frame buffer between capture and publish, leading to discomforting screen flicker. Luckily, with the timing repair implemented above, we can now let the LTDC run by itself (it has its own DMA after all) and do something else in the meantime. Yes, we can do the endian swap: while we publish part of the frame buffer with the LTDC, we process/swap the rest of it. Of course, this only works if two things apply: 1) we have some form of pre-swapped section of the frame buffer for the LTDC to start upon (that is the first endian swap before the RGB trasmit function) and 2) the LTDC transmit does not finish before we finish with the endian swap. Using the original PLL setup I had for the LTDC meant that we were only able to do a fraction of the processing before the LTDC overtook the swapping. The solution had been to slow down the LTDC as much as possible just until I could preceive no degradation in publishing quality/refresh rate and then adjust the swapping to exactly finish the same time as the publishing.
+
+Now, we have a fully coloured 240x240 output from the OV7670 at around 30 fps.
 
 ## User guide
 I have left the 10 fps SPI+DMA version in the code behind #ifdef markers. It works without any extra user attention.
