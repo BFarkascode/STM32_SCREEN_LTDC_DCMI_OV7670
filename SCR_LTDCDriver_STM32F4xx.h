@@ -16,8 +16,10 @@
 //LOCAL CONSTANT
 
 //LOCAL VARIABLE
+static uint8_t enable_layer_false_trigger = 1;
 
 //EXTERNAL VARIABLE
+extern uint8_t layer_published;
 
 //FUNCTION PROTOTYPES
 void LTDC_Init(void);
