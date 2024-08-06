@@ -82,6 +82,9 @@ uint8_t OV7670_address = 0x21;
 uint8_t image_captured_flag = 0;
 uint8_t frame_end_flag = 0;
 
+uint8_t layer_published = 0;
+uint8_t first_execution = 1;
+
 /* USER CODE END 0 */
 
 /**
@@ -198,9 +201,9 @@ int main(void)
 //#endif
 	  //---------Capture camera image----------//
 
-#ifdef endian_swap
-// ENDIAN swap solves the problem of the colour, but it takes too long to execute, introducing some flicker to the screen
-	  for(int i = 0; i < 115200; i+=2){
+//#ifdef first_part_endian_swap
+// this is the "lead" we will give the LTDC
+	  for(int i = 0; i < 34800; i+=2){
 
 		  uint8_t pix_buf;
 		  pix_buf = image[i];
@@ -208,7 +211,7 @@ int main(void)
 		  image[i+1] = pix_buf;
 
 	  }
-#endif
+//#endif
 	  //---------Publish image----------//
 
 #ifdef SPI_10_fps
@@ -220,8 +223,21 @@ int main(void)
 //#ifdef LTDC_30_fps
 
 	  Transmit_RGB_320x240Frame(image_read_ptr);
+	  
+//#ifdef second_part_endian_swap
+	  for(int i = 34800; i < 115200; i+=2){						
+		  
+		  uint8_t pix_buf;
+		  pix_buf = image[i];
+		  image[i] = image[i+1];
+		  image[i+1] = pix_buf;
 
-	  Delay_ms(16);																	//we run LTDC to match 60 fps, then we force-shut it off
+	  }
+//#endif
+
+	  while(!layer_published);														//we don't move forward until the layer is published (see line trigger in the LTDC)
+
+	  layer_published = 0;
 
 //#endif
 
